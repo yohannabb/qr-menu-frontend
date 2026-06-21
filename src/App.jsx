@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { QRCodeSVG } from 'qrcode.react'; // Cleaned up: Only importing what the library actually exports
+import { QRCodeSVG } from 'qrcode.react'; 
 import './App.css';
 
 const CARD_COLORS = ['card-red', 'card-orange', 'card-green'];
@@ -72,9 +72,10 @@ function App() {
       formData.append('image', imageFile);
     }
 
+    // FIXED: Updated target URLs to use your live Render production link
     const url = editingItem 
-      ? `http://localhost:5000/api/menu/${editingItem._id}` 
-      : 'http://localhost:5000/api/menu';
+      ? `https://qr-menu-backend.onrender.com/api/menu/${editingItem._id}` 
+      : 'https://qr-menu-backend.onrender.com/api/menu';
     
     const method = editingItem ? 'PUT' : 'POST';
 
@@ -111,7 +112,8 @@ function App() {
   const handleDelete = (id, e) => {
     e.stopPropagation();
     if (window.confirm("Are you completely sure you want to delete this menu item?")) {
-      fetch(`http://localhost:5000/api/menu/${id}`, { method: 'DELETE' })
+      // FIXED: Updated delete URL to use your live Render production link
+      fetch(`https://qr-menu-backend.onrender.com/api/menu/${id}`, { method: 'DELETE' })
         .then(res => res.json())
         .then(() => {
           alert("Item Deleted!");
@@ -174,7 +176,6 @@ function App() {
             </div>
           </form>
 
-          {/* FIX: QR Code Block moved to its proper home, safely inside the return render container */}
           <div style={{ 
             marginTop: '20px', 
             padding: '16px', 
@@ -285,7 +286,7 @@ function App() {
         </div>
       )}
 
-      {/* Footer System with Hidden Login Action */}
+      {/* Footer System */}
       <footer className="menu-footer">
         <p className="footer-line-1">ALL MEALS ARE PREPARED FRESH TO ORDER.</p>
         <p className="footer-line-2">THANK YOU FOR YOUR PATRONAGE!</p>
