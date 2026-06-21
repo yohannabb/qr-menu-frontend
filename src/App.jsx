@@ -19,7 +19,7 @@ function App() {
   // Fetch items from database
   const fetchMenu = () => {
     setLoading(true);
-    fetch('http://localhost:5000/api/menu')
+    fetch('https://qr-menu-backend.onrender.com/api/menu')
       .then((res) => res.json())
       .then((data) => {
         setMenuItems(data);
