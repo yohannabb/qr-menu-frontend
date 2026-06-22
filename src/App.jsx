@@ -49,7 +49,6 @@ function App() {
   // Sync subcategory form state when main category drops down
   const handleMainCategoryChange = (e) => {
     const mainCat = e.target.value;
-    // This forces the form subcategory to immediately shift to the first valid sub-choice
     const defaultSub = MENU_STRUCTURE[mainCat][1]; 
     setForm(prev => ({ ...prev, category: mainCat, subcategory: defaultSub }));
   };
@@ -57,7 +56,7 @@ function App() {
   // Switch tabs cleanly on navigation click
   const handleNavCategoryClick = (cat) => {
     setActiveCategory(cat);
-    setActiveSubcategory(MENU_STRUCTURE[cat][0]); // Resets to "All [Category]"
+    setActiveSubcategory(MENU_STRUCTURE[cat][0]); 
   };
 
   const handleAdminLogin = () => {
@@ -162,13 +161,12 @@ function App() {
     }
   };
 
-  // Real-world dynamic smart filter matching logic
+  // Case-Insensitive Filter matching logic with deep keywords fallback parameters
   const filteredMenu = menuItems.filter(item => {
-    // 1. Verify main parent category matches (e.g. Food vs Drinks)
     const itemCat = item.category ? item.category.trim().toLowerCase() : '';
     const activeCat = activeCategory.trim().toLowerCase();
     
-    // Treat "dessert & pastry" mapping checks safely
+    // 1. Verify main parent category matches
     const matchesMain = itemCat === activeCat || (activeCat === 'dessert' && itemCat.includes('dessert'));
     if (!matchesMain) return false;
     
@@ -178,16 +176,20 @@ function App() {
     const savedSub = item.subcategory ? item.subcategory.trim().toLowerCase() : '';
     const targetSub = activeSubcategory.trim().toLowerCase();
     
+    // 3. Perfect check match for newly updated database schema objects
     if (savedSub === targetSub) return true;
 
-    // 3. Last Line Defenses: Fallback mapping if backend server schema drops custom subcategory string fields
+    // 4. 🔥 DEFENSIVE RECOVERY LOOP: Fallback keyword matching matrix if subcategory is blank or general
     const nameLower = item.name ? item.name.toLowerCase() : '';
-    if (!item.subcategory || savedSub === '') {
-      if (targetSub === 'hot drinks' && (nameLower.includes('coffee') || nameLower.includes('tea') || nameLower.includes('macchiato'))) return true;
-      if (targetSub === 'soft drinks & juices' && (nameLower.includes('juice') || nameLower.includes('coke') || nameLower.includes('fanta') || nameLower.includes('water'))) return true;
-      if (targetSub === 'meat section' && (nameLower.includes('tibis') || nameLower.includes('meat') || nameLower.includes('burger') || nameLower.includes('kitfo'))) return true;
-      if (targetSub === 'vegetarian / fasting' && (nameLower.includes('shiro') || nameLower.includes('beyaynetu') || nameLower.includes('fasting') || nameLower.includes('veg'))) return true;
-      if (targetSub === 'cakes' && nameLower.includes('cake')) return true;
+    const descLower = item.desc ? item.desc.toLowerCase() : '';
+    
+    if (!item.subcategory || savedSub === '' || savedSub === 'general section') {
+      if (targetSub === 'hot drinks' && (nameLower.includes('coffee') || nameLower.includes('tea') || nameLower.includes('macchiato') || nameLower.includes('bunna') || nameLower.includes('shai') || nameLower.includes('cappuccino') || nameLower.includes('milk'))) return true;
+      if (targetSub === 'soft drinks & juices' && (nameLower.includes('juice') || nameLower.includes('coke') || nameLower.includes('fanta') || nameLower.includes('water') || nameLower.includes('sprite') || nameLower.includes('ambo'))) return true;
+      if (targetSub === 'meat section' && (nameLower.includes('tibs') || nameLower.includes('tibis') || nameLower.includes('meat') || nameLower.includes('burger') || nameLower.includes('kitfo') || nameLower.includes('shekla') || nameLower.includes('gore'))) return true;
+      if (targetSub === 'vegetarian / fasting' && (nameLower.includes('shiro') || nameLower.includes('beyaynetu') || nameLower.includes('fasting') || nameLower.includes('veg') || nameLower.includes('misir') || nameLower.includes('kik'))) return true;
+      if (targetSub === 'cakes' && (nameLower.includes('cake') || descLower.includes('cake'))) return true;
+      if (targetSub === 'pastries' && (nameLower.includes('pastry') || nameLower.includes('croissant') || nameLower.includes('sambusa') || nameLower.includes('donut'))) return true;
     }
     
     return false;
@@ -373,12 +375,7 @@ function App() {
         </button>
       </footer>
     </div>
-
-
-
-
   );
-
 }
 
 export default App;
