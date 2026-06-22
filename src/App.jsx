@@ -57,6 +57,16 @@ function App() {
   // Handle Add or Update Submission
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Frontend Tracking Alerts
+    alert("handleSubmit function has started running!");
+    console.log("Form state right now:", form);
+
+    // Simple validation safeguard
+    if (!form.name || !form.price) {
+      alert("Please provide at least a Name and Price before saving.");
+      return;
+    }
     
     const formData = new FormData();
     formData.append('name', form.name);
@@ -72,7 +82,6 @@ function App() {
       formData.append('image', imageFile);
     }
 
-    // FIXED: Updated target URLs to use your live Render production link
     const url = editingItem 
       ? `https://qr-menu-backend.onrender.com/api/menu/${editingItem._id}` 
       : 'https://qr-menu-backend.onrender.com/api/menu';
@@ -91,7 +100,10 @@ function App() {
       setEditingItem(null);
       fetchMenu();
     })
-    .catch(err => console.error("Error saving item:", err));
+    .catch(err => {
+      alert("Network or Server connection error occurred!");
+      console.error("Error saving item:", err);
+    });
   };
 
   // Populate form fields for Editing
@@ -112,7 +124,6 @@ function App() {
   const handleDelete = (id, e) => {
     e.stopPropagation();
     if (window.confirm("Are you completely sure you want to delete this menu item?")) {
-      // FIXED: Updated delete URL to use your live Render production link
       fetch(`https://qr-menu-backend.onrender.com/api/menu/${id}`, { method: 'DELETE' })
         .then(res => res.json())
         .then(() => {
@@ -143,10 +154,13 @@ function App() {
           <h3 style={{ color: '#f39c12', margin: '0 0 12px 0', textTransform: 'uppercase' }}>
             {editingItem ? "⚡ Editing Mode" : "📝 Add New Menu Item"}
           </h3>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <input type="text" name="name" placeholder="Food Name" value={form.name} onChange={handleInputChange} required style={{ padding: '8px', borderRadius: '4px', border: 'none' }} />
+          
+          {/* CHANGED FROM <form> TO <div> TO BYPASS BROWSER VALIDATION ENTIRELY */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <input type="text" name="name" placeholder="Food Name" value={form.name} onChange={handleInputChange} style={{ padding: '8px', borderRadius: '4px', border: 'none' }} />
+            
             <div style={{ display: 'flex', gap: '8px' }}>
-              <input type="number" step="0.01" name="price" placeholder="Price ($)" value={form.price} onChange={handleInputChange} required style={{ padding: '8px', borderRadius: '4px', border: 'none', flex: 1 }} />
+              <input type="number" step="0.01" name="price" placeholder="Price ($)" value={form.price} onChange={handleInputChange} style={{ padding: '8px', borderRadius: '4px', border: 'none', flex: 1 }} />
               <select name="category" value={form.category} onChange={handleInputChange} style={{ padding: '8px', borderRadius: '4px', border: 'none', flex: 1 }}>
                 <option value="Food">Food</option>
                 <option value="Drinks">Drinks</option>
@@ -165,7 +179,8 @@ function App() {
             <textarea name="desc" placeholder="Item Ingredients or Description..." value={form.desc} onChange={handleInputChange} rows="2" style={{ padding: '8px', borderRadius: '4px', border: 'none', fontFamily: 'sans-serif' }}></textarea>
             
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button type="submit" style={{ backgroundColor: '#f39c12', color: '#000', border: 'none', padding: '10px', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', flex: 2 }}>
+              {/* ADDED onClick HERE TO FORCE THE FUNCTION TO RUN EXPLICITLY */}
+              <button type="button" onClick={handleSubmit} style={{ backgroundColor: '#f39c12', color: '#000', border: 'none', padding: '10px', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', flex: 2 }}>
                 {editingItem ? "Update Item" : "Save to Database"}
               </button>
               {editingItem && (
@@ -174,7 +189,7 @@ function App() {
                 </button>
               )}
             </div>
-          </form>
+          </div>
 
           <div style={{ 
             marginTop: '20px', 
@@ -208,7 +223,6 @@ function App() {
 
         </div>
       )}
-
       {/* Category Navigation Bar */}
       <nav className="category-bar">
         {['All', 'Food', 'Drinks', 'Dessert'].map((cat) => (
