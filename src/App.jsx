@@ -10,7 +10,6 @@ const MENU_STRUCTURE = {
   Drinks: ['All Drinks', 'Hot Drinks', 'Soft Drinks & Juices', 'Alcoholic Beverages'],
   Dessert: ['All Dessert', 'Cakes', 'Pastries']
 };
-
 function App() {
   const [menuItems, setMenuItems] = useState([]); 
   const [activeCategory, setActiveCategory] = useState('Food');
@@ -49,8 +48,10 @@ function App() {
   // Sync subcategory form state when main category drops down
   const handleMainCategoryChange = (e) => {
     const mainCat = e.target.value;
-    const defaultSub = MENU_STRUCTURE[mainCat][1]; // Selects first real subcategory option
-    setForm({ ...form, category: mainCat, subcategory: defaultSub });
+    // This forces the form subcategory to immediately shift to the first valid sub-choice
+    const defaultSub = MENU_STRUCTURE[mainCat][1]; 
+    setForm(prev => ({ ...prev, category: mainCat, subcategory: defaultSub }));
+
   };
 
   // Switch tabs cleanly on navigation click
@@ -166,7 +167,7 @@ function App() {
     const matchesMain = item.category && item.category.trim().toLowerCase() === activeCategory.trim().toLowerCase();
     
     if (!matchesMain) return false;
-    if (activeSubcategory.startsWith('All')) return true; // Show everything under that main section
+    if (activeSubcategory.startsWith('All')) return true; 
     
     return item.subcategory && item.subcategory.trim().toLowerCase() === activeSubcategory.trim().toLowerCase();
   });
