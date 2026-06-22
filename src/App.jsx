@@ -19,8 +19,12 @@ function App() {
   // Fetch items from database
   const fetchMenu = () => {
     setLoading(true);
-    fetch('https://qr-menu-backend-qkfd.onrender.com')
-      .then((res) => res.json())
+    // FIXED: Added the complete /api/menu route so it requests data records instead of the root HTML page
+    fetch('https://qr-menu-backend-qkfd.onrender.com/api/menu')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch structural data');
+        return res.json();
+      })
       .then((data) => {
         setMenuItems(data);
         setLoading(false);
@@ -56,13 +60,9 @@ function App() {
 
   // Handle Add or Update Submission
   const handleSubmit = (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
 
-    // Frontend Tracking Alerts
-    alert("handleSubmit function has started running!");
-    console.log("Form state right now:", form);
-
-    // Simple validation safeguard
+    // Verification check safeguard
     if (!form.name || !form.price) {
       alert("Please provide at least a Name and Price before saving.");
       return;
@@ -83,8 +83,8 @@ function App() {
     }
 
     const url = editingItem 
-  ? `https://qr-menu-backend-qkfd.onrender.com/api/menu/${editingItem._id}` 
-  : 'https://qr-menu-backend-qkfd.onrender.com/api/menu';
+      ? `https://qr-menu-backend-qkfd.onrender.com/api/menu/${editingItem._id}` 
+      : 'https://qr-menu-backend-qkfd.onrender.com/api/menu';
     
     const method = editingItem ? 'PUT' : 'POST';
 
@@ -92,7 +92,15 @@ function App() {
       method: method,
       body: formData 
     })
-    .then(res => res.json())
+    .then(res => {
+      // FIXED: Added strict verification response checks to handle hidden database network exceptions
+      if (!res.ok) {
+        return res.json().then(errData => {
+          throw new Error(errData.message || "The application database rejected the saving operation.");
+        });
+      }
+      return res.json();
+    })
     .then(() => {
       alert(editingItem ? "Item Updated!" : "Item Added Successfully!");
       setForm({ name: '', price: '', category: 'Food', desc: '', img: '' });
@@ -101,7 +109,7 @@ function App() {
       fetchMenu();
     })
     .catch(err => {
-      alert("Network or Server connection error occurred!");
+      alert(`❌ Failed to save: ${err.message}`);
       console.error("Error saving item:", err);
     });
   };
@@ -125,7 +133,10 @@ function App() {
     e.stopPropagation();
     if (window.confirm("Are you completely sure you want to delete this menu item?")) {
       fetch(`https://qr-menu-backend-qkfd.onrender.com/api/menu/${id}`, { method: 'DELETE' })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error('Server rejected deletion');
+          return res.json();
+        })
         .then(() => {
           alert("Item Deleted!");
           fetchMenu();
@@ -155,7 +166,6 @@ function App() {
             {editingItem ? "⚡ Editing Mode" : "📝 Add New Menu Item"}
           </h3>
           
-          {/* CHANGED FROM <form> TO <div> TO BYPASS BROWSER VALIDATION ENTIRELY */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <input type="text" name="name" placeholder="Food Name" value={form.name} onChange={handleInputChange} style={{ padding: '8px', borderRadius: '4px', border: 'none' }} />
             
@@ -179,7 +189,6 @@ function App() {
             <textarea name="desc" placeholder="Item Ingredients or Description..." value={form.desc} onChange={handleInputChange} rows="2" style={{ padding: '8px', borderRadius: '4px', border: 'none', fontFamily: 'sans-serif' }}></textarea>
             
             <div style={{ display: 'flex', gap: '8px' }}>
-              {/* ADDED onClick HERE TO FORCE THE FUNCTION TO RUN EXPLICITLY */}
               <button type="button" onClick={handleSubmit} style={{ backgroundColor: '#f39c12', color: '#000', border: 'none', padding: '10px', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', flex: 2 }}>
                 {editingItem ? "Update Item" : "Save to Database"}
               </button>
@@ -223,6 +232,7 @@ function App() {
 
         </div>
       )}
+
       {/* Category Navigation Bar */}
       <nav className="category-bar">
         {['All', 'Food', 'Drinks', 'Dessert'].map((cat) => (
