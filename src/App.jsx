@@ -19,7 +19,7 @@ function App() {
   // Fetch items from database
   const fetchMenu = () => {
     setLoading(true);
-    fetch('https://qr-menu-backend.onrender.com/api/menu')
+    fetch('https://qr-menu-backend-qkfd.onrender.com')
       .then((res) => res.json())
       .then((data) => {
         setMenuItems(data);
@@ -83,8 +83,8 @@ function App() {
     }
 
     const url = editingItem 
-      ? `https://qr-menu-backend.onrender.com/api/menu/${editingItem._id}` 
-      : 'https://qr-menu-backend.onrender.com/api/menu';
+  ? `https://qr-menu-backend-qkfd.onrender.com/api/menu/${editingItem._id}` 
+  : 'https://qr-menu-backend-qkfd.onrender.com/api/menu';
     
     const method = editingItem ? 'PUT' : 'POST';
 
@@ -124,7 +124,7 @@ function App() {
   const handleDelete = (id, e) => {
     e.stopPropagation();
     if (window.confirm("Are you completely sure you want to delete this menu item?")) {
-      fetch(`https://qr-menu-backend.onrender.com/api/menu/${id}`, { method: 'DELETE' })
+      fetch(`https://qr-menu-backend-qkfd.onrender.com/api/menu/${id}`, { method: 'DELETE' })
         .then(res => res.json())
         .then(() => {
           alert("Item Deleted!");
