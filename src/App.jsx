@@ -10,6 +10,7 @@ const MENU_STRUCTURE = {
   Drinks: ['All Drinks', 'Hot Drinks', 'Soft Drinks & Juices', 'Alcoholic Beverages'],
   Dessert: ['All Dessert', 'Cakes', 'Pastries']
 };
+
 function App() {
   const [menuItems, setMenuItems] = useState([]); 
   const [activeCategory, setActiveCategory] = useState('Food');
@@ -51,7 +52,6 @@ function App() {
     // This forces the form subcategory to immediately shift to the first valid sub-choice
     const defaultSub = MENU_STRUCTURE[mainCat][1]; 
     setForm(prev => ({ ...prev, category: mainCat, subcategory: defaultSub }));
-
   };
 
   // Switch tabs cleanly on navigation click
@@ -162,14 +162,35 @@ function App() {
     }
   };
 
-  // Real-world deep filter matrix logic
+  // Real-world dynamic smart filter matching logic
   const filteredMenu = menuItems.filter(item => {
-    const matchesMain = item.category && item.category.trim().toLowerCase() === activeCategory.trim().toLowerCase();
+    // 1. Verify main parent category matches (e.g. Food vs Drinks)
+    const itemCat = item.category ? item.category.trim().toLowerCase() : '';
+    const activeCat = activeCategory.trim().toLowerCase();
     
+    // Treat "dessert & pastry" mapping checks safely
+    const matchesMain = itemCat === activeCat || (activeCat === 'dessert' && itemCat.includes('dessert'));
     if (!matchesMain) return false;
-    if (activeSubcategory.startsWith('All')) return true; 
     
-    return item.subcategory && item.subcategory.trim().toLowerCase() === activeSubcategory.trim().toLowerCase();
+    // 2. If filtering by "All [Section]", pull everything immediately
+    if (activeSubcategory.toLowerCase().startsWith('all')) return true; 
+    
+    const savedSub = item.subcategory ? item.subcategory.trim().toLowerCase() : '';
+    const targetSub = activeSubcategory.trim().toLowerCase();
+    
+    if (savedSub === targetSub) return true;
+
+    // 3. Last Line Defenses: Fallback mapping if backend server schema drops custom subcategory string fields
+    const nameLower = item.name ? item.name.toLowerCase() : '';
+    if (!item.subcategory || savedSub === '') {
+      if (targetSub === 'hot drinks' && (nameLower.includes('coffee') || nameLower.includes('tea') || nameLower.includes('macchiato'))) return true;
+      if (targetSub === 'soft drinks & juices' && (nameLower.includes('juice') || nameLower.includes('coke') || nameLower.includes('fanta') || nameLower.includes('water'))) return true;
+      if (targetSub === 'meat section' && (nameLower.includes('tibis') || nameLower.includes('meat') || nameLower.includes('burger') || nameLower.includes('kitfo'))) return true;
+      if (targetSub === 'vegetarian / fasting' && (nameLower.includes('shiro') || nameLower.includes('beyaynetu') || nameLower.includes('fasting') || nameLower.includes('veg'))) return true;
+      if (targetSub === 'cakes' && nameLower.includes('cake')) return true;
+    }
+    
+    return false;
   });
 
   return (
@@ -202,7 +223,7 @@ function App() {
               </select>
             </div>
 
-            {/* Dynamic Real-World Subcategory Form Selector Selector */}
+            {/* Dynamic Real-World Subcategory Form Selector */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <label style={{ color: '#f39c12', fontSize: '0.8rem', fontWeight: 'bold' }}>Specific Menu Section:</label>
               <select name="subcategory" value={form.subcategory} onChange={handleInputChange} style={{ padding: '8px', borderRadius: '4px', border: 'none', width: '100%' }}>
@@ -302,7 +323,9 @@ function App() {
 
                 <div className="item-details">
                   <h3 className="item-name" style={{ marginTop: isAdmin ? '24px' : '0' }}>{item.name}</h3>
-                  <span style={{ fontSize: '0.7rem', color: '#f39c12', background: '#1b120c', padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginBottom: '6px' }}>{item.subcategory}</span>
+                  <span style={{ fontSize: '0.7rem', color: '#f39c12', background: '#1b120c', padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginBottom: '6px' }}>
+                    {item.subcategory || "General Section"}
+                  </span>
                   <p className="item-desc">{item.desc}</p>
                   
                   <div className="price-badge-circle">
@@ -331,7 +354,7 @@ function App() {
                 <h3 className="modal-item-name">{selectedItem.name}</h3>
                 <span className="modal-item-price">{selectedItem.price ? selectedItem.price.toFixed(2) : '0.00'} <small style={{fontSize:'0.6rem'}}>ETB</small></span>
               </div>
-              <span className="modal-category-tag">{selectedItem.category} • {selectedItem.subcategory}</span>
+              <span className="modal-category-tag">{selectedItem.category} • {selectedItem.subcategory || "General"}</span>
               <p className="modal-item-desc">{selectedItem.desc}</p>
             </div>
           </div>
