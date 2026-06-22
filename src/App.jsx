@@ -76,7 +76,7 @@ function App() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Handle Add or Update Submission
+  // Handle Add or Update Submission safely
   const handleSubmit = (e) => {
     if (e && e.preventDefault) e.preventDefault();
 
@@ -85,12 +85,22 @@ function App() {
       return;
     }
     
+    const finalCategory = form.category || 'Food';
+    let finalSubcategory = form.subcategory;
+    
+    // Fallback block if subcategory state becomes blank
+    if (!finalSubcategory || finalSubcategory === '') {
+      finalSubcategory = MENU_STRUCTURE[finalCategory][1];
+    }
+
     const formData = new FormData();
-    formData.append('name', form.name);
+    
+    // 🔥 FIXED: Appending text data elements BEFORE files so multer parses everything reliably
+    formData.append('name', form.name.trim());
     formData.append('price', form.price);
-    formData.append('category', form.category);
-    formData.append('subcategory', form.subcategory);
-    formData.append('desc', form.desc);
+    formData.append('category', finalCategory);
+    formData.append('subcategory', finalSubcategory); 
+    formData.append('desc', form.desc ? form.desc.trim() : '');
     
     if (editingItem && !imageFile) {
       formData.append('img', form.img);
@@ -119,11 +129,11 @@ function App() {
       return res.json();
     })
     .then(() => {
-      alert(editingItem ? "Item Updated!" : "Item Added Successfully!");
+      alert(editingItem ? "Item Updated Successfully!" : "Item Added Successfully!");
       setForm({ name: '', price: '', category: 'Food', subcategory: 'Meat Section', desc: '', img: '' });
       setImageFile(null); 
       setEditingItem(null);
-      fetchMenu();
+      fetchMenu(); 
     })
     .catch(err => {
       alert(`❌ Failed to save: ${err.message}`);
@@ -161,25 +171,25 @@ function App() {
     }
   };
 
-  // Case-Insensitive Filter matching logic with deep keywords fallback parameters
+  // Case-Insensitive Filter matching logic with automatic keyword fallbacks
   const filteredMenu = menuItems.filter(item => {
     const itemCat = item.category ? item.category.trim().toLowerCase() : '';
     const activeCat = activeCategory.trim().toLowerCase();
     
-    // 1. Verify main parent category matches
+    // 1. Verify main category matches
     const matchesMain = itemCat === activeCat || (activeCat === 'dessert' && itemCat.includes('dessert'));
     if (!matchesMain) return false;
     
-    // 2. If filtering by "All [Section]", pull everything immediately
+    // 2. If filtering by "All", pull everything immediately
     if (activeSubcategory.toLowerCase().startsWith('all')) return true; 
     
     const savedSub = item.subcategory ? item.subcategory.trim().toLowerCase() : '';
     const targetSub = activeSubcategory.trim().toLowerCase();
     
-    // 3. Perfect check match for newly updated database schema objects
+    // 3. Perfect match validation
     if (savedSub === targetSub) return true;
 
-    // 4. 🔥 DEFENSIVE RECOVERY LOOP: Fallback keyword matching matrix if subcategory is blank or general
+    // 4. Fallback search logic for older items missing a subcategory field
     const nameLower = item.name ? item.name.toLowerCase() : '';
     const descLower = item.desc ? item.desc.toLowerCase() : '';
     
@@ -225,7 +235,7 @@ function App() {
               </select>
             </div>
 
-            {/* Dynamic Real-World Subcategory Form Selector */}
+            {/* Dynamic Subcategory Form Selector */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <label style={{ color: '#f39c12', fontSize: '0.8rem', fontWeight: 'bold' }}>Specific Menu Section:</label>
               <select name="subcategory" value={form.subcategory} onChange={handleInputChange} style={{ padding: '8px', borderRadius: '4px', border: 'none', width: '100%' }}>
@@ -272,7 +282,7 @@ function App() {
         ))}
       </nav>
 
-      {/* Subcategory Visual Scannable Tag Navigation Track */}
+      {/* Subcategory Navigation Track */}
       <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '8px 16px', background: '#261a10' }}>
         {MENU_STRUCTURE[activeCategory].map((sub) => (
           <button
