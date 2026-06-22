@@ -4,9 +4,17 @@ import './App.css';
 
 const CARD_COLORS = ['card-red', 'card-orange', 'card-green'];
 
+// Real-World Cafeteria Menu Mapping Architecture
+const MENU_STRUCTURE = {
+  Food: ['All Food', 'Meat Section', 'Vegetarian / Fasting', 'Burgers & Snacks'],
+  Drinks: ['All Drinks', 'Hot Drinks', 'Soft Drinks & Juices', 'Alcoholic Beverages'],
+  Dessert: ['All Dessert', 'Cakes', 'Pastries']
+};
+
 function App() {
   const [menuItems, setMenuItems] = useState([]); 
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeCategory, setActiveCategory] = useState('Food');
+  const [activeSubcategory, setActiveSubcategory] = useState('All Food');
   const [selectedItem, setSelectedItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [imageFile, setImageFile] = useState(null);
@@ -14,12 +22,11 @@ function App() {
   // Admin Dashboard States
   const [isAdmin, setIsAdmin] = useState(false);
   const [editingItem, setEditingItem] = useState(null); 
-  const [form, setForm] = useState({ name: '', price: '', category: 'Food', desc: '', img: '' });
+  const [form, setForm] = useState({ name: '', price: '', category: 'Food', subcategory: 'Meat Section', desc: '', img: '' });
 
   // Fetch items from database
   const fetchMenu = () => {
     setLoading(true);
-    // FIXED: Added the complete /api/menu route so it requests data records instead of the root HTML page
     fetch('https://qr-menu-backend-qkfd.onrender.com/api/menu')
       .then((res) => {
         if (!res.ok) throw new Error('Failed to fetch structural data');
@@ -39,7 +46,19 @@ function App() {
     fetchMenu();
   }, []);
 
-  // Admin Login Handler
+  // Sync subcategory form state when main category drops down
+  const handleMainCategoryChange = (e) => {
+    const mainCat = e.target.value;
+    const defaultSub = MENU_STRUCTURE[mainCat][1]; // Selects first real subcategory option
+    setForm({ ...form, category: mainCat, subcategory: defaultSub });
+  };
+
+  // Switch tabs cleanly on navigation click
+  const handleNavCategoryClick = (cat) => {
+    setActiveCategory(cat);
+    setActiveSubcategory(MENU_STRUCTURE[cat][0]); // Resets to "All [Category]"
+  };
+
   const handleAdminLogin = () => {
     if (isAdmin) {
       setIsAdmin(false); 
@@ -53,7 +72,6 @@ function App() {
     }
   };
 
-  // Form input changer helper
   const handleInputChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -62,7 +80,6 @@ function App() {
   const handleSubmit = (e) => {
     if (e && e.preventDefault) e.preventDefault();
 
-    // Verification check safeguard
     if (!form.name || !form.price) {
       alert("Please provide at least a Name and Price before saving.");
       return;
@@ -72,6 +89,7 @@ function App() {
     formData.append('name', form.name);
     formData.append('price', form.price);
     formData.append('category', form.category);
+    formData.append('subcategory', form.subcategory);
     formData.append('desc', form.desc);
     
     if (editingItem && !imageFile) {
@@ -90,10 +108,9 @@ function App() {
 
     fetch(url, {
       method: method,
-      body: formData 
+      body: formData
     })
     .then(res => {
-      // FIXED: Added strict verification response checks to handle hidden database network exceptions
       if (!res.ok) {
         return res.json().then(errData => {
           throw new Error(errData.message || "The application database rejected the saving operation.");
@@ -103,7 +120,7 @@ function App() {
     })
     .then(() => {
       alert(editingItem ? "Item Updated!" : "Item Added Successfully!");
-      setForm({ name: '', price: '', category: 'Food', desc: '', img: '' });
+      setForm({ name: '', price: '', category: 'Food', subcategory: 'Meat Section', desc: '', img: '' });
       setImageFile(null); 
       setEditingItem(null);
       fetchMenu();
@@ -114,21 +131,20 @@ function App() {
     });
   };
 
-  // Populate form fields for Editing
   const startEdit = (item, e) => {
     e.stopPropagation(); 
     setEditingItem(item);
     setForm({
       name: item.name,
       price: item.price,
-      category: item.category,
+      category: item.category || 'Food',
+      subcategory: item.subcategory || 'Meat Section',
       desc: item.desc || '',
       img: item.img || ''
     });
     window.scrollTo({ top: 0, behavior: 'smooth' }); 
   };
 
-  // Delete Handler
   const handleDelete = (id, e) => {
     e.stopPropagation();
     if (window.confirm("Are you completely sure you want to delete this menu item?")) {
@@ -145,40 +161,57 @@ function App() {
     }
   };
 
-  const filteredMenu = activeCategory === 'All' 
-    ? menuItems 
-    : menuItems.filter(item => item.category && item.category.trim().toLowerCase() === activeCategory.trim().toLowerCase());
+  // Real-world deep filter matrix logic
+  const filteredMenu = menuItems.filter(item => {
+    const matchesMain = item.category && item.category.trim().toLowerCase() === activeCategory.trim().toLowerCase();
+    
+    if (!matchesMain) return false;
+    if (activeSubcategory.startsWith('All')) return true; // Show everything under that main section
+    
+    return item.subcategory && item.subcategory.trim().toLowerCase() === activeSubcategory.trim().toLowerCase();
+  });
 
   return (
     <div className="mobile-layout">
       {/* Header Layout */}
       <header className="menu-header">
         <div className="brand-badge">
-          <h1 className="restaurant-name">HABESHA'S HOTEL</h1>
+          <h1 className="restaurant-name">CAFE & PASTRY HUB</h1>
         </div>
-        <p className="restaurant-tagline">Savour the Taste • Scan • Order • Enjoy</p>
+        <p className="restaurant-tagline">Fresh Cooking • Scan • Enjoy</p>
       </header>
 
       {/* ADMIN CONTROL PANEL DASHBOARD VIEW */}
       {isAdmin && (
         <div style={{ backgroundColor: '#1b120c', padding: '16px', borderBottom: '3px solid #f39c12', fontFamily: 'sans-serif' }}>
           <h3 style={{ color: '#f39c12', margin: '0 0 12px 0', textTransform: 'uppercase' }}>
-            {editingItem ? "⚡ Editing Mode" : "📝 Add New Menu Item"}
+            {editingItem ? "⚡ Editing Mode" : "📝 Add New Cafeteria Item"}
           </h3>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <input type="text" name="name" placeholder="Food Name" value={form.name} onChange={handleInputChange} style={{ padding: '8px', borderRadius: '4px', border: 'none' }} />
+            <input type="text" name="name" placeholder="Item Name (e.g., Special Beyaynetu, Macchiato)" value={form.name} onChange={handleInputChange} style={{ padding: '8px', borderRadius: '4px', border: 'none' }} />
             
             <div style={{ display: 'flex', gap: '8px' }}>
-              <input type="number" step="0.01" name="price" placeholder="Price ($)" value={form.price} onChange={handleInputChange} style={{ padding: '8px', borderRadius: '4px', border: 'none', flex: 1 }} />
-              <select name="category" value={form.category} onChange={handleInputChange} style={{ padding: '8px', borderRadius: '4px', border: 'none', flex: 1 }}>
+              <input type="number" step="0.01" name="price" placeholder="Price (ETB)" value={form.price} onChange={handleInputChange} style={{ padding: '8px', borderRadius: '4px', border: 'none', flex: 1 }} />
+              
+              <select name="category" value={form.category} onChange={handleMainCategoryChange} style={{ padding: '8px', borderRadius: '4px', border: 'none', flex: 1 }}>
                 <option value="Food">Food</option>
                 <option value="Drinks">Drinks</option>
-                <option value="Dessert">Dessert</option>
+                <option value="Dessert">Dessert & Pastry</option>
+              </select>
+            </div>
+
+            {/* Dynamic Real-World Subcategory Form Selector Selector */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <label style={{ color: '#f39c12', fontSize: '0.8rem', fontWeight: 'bold' }}>Specific Menu Section:</label>
+              <select name="subcategory" value={form.subcategory} onChange={handleInputChange} style={{ padding: '8px', borderRadius: '4px', border: 'none', width: '100%' }}>
+                {MENU_STRUCTURE[form.category].slice(1).map(sub => (
+                  <option key={sub} value={sub}>{sub}</option>
+                ))}
               </select>
             </div>
             
-            <label style={{ color: '#f39c12', fontSize: '0.85rem', fontWeight: 'bold' }}>Upload Food Image File:</label>
+            <label style={{ color: '#f39c12', fontSize: '0.85rem', fontWeight: 'bold' }}>Upload Item Image File:</label>
             <input 
               type="file" 
               accept="image/*" 
@@ -186,76 +219,69 @@ function App() {
               style={{ padding: '6px', color: '#fff', background: '#33231a', borderRadius: '4px' }} 
             />
             
-            <textarea name="desc" placeholder="Item Ingredients or Description..." value={form.desc} onChange={handleInputChange} rows="2" style={{ padding: '8px', borderRadius: '4px', border: 'none', fontFamily: 'sans-serif' }}></textarea>
+            <textarea name="desc" placeholder="Ingredients description details..." value={form.desc} onChange={handleInputChange} rows="2" style={{ padding: '8px', borderRadius: '4px', border: 'none', fontFamily: 'sans-serif' }}></textarea>
             
             <div style={{ display: 'flex', gap: '8px' }}>
               <button type="button" onClick={handleSubmit} style={{ backgroundColor: '#f39c12', color: '#000', border: 'none', padding: '10px', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', flex: 2 }}>
-                {editingItem ? "Update Item" : "Save to Database"}
+                {editingItem ? "Update Item" : "Save to Cafeteria System"}
               </button>
               {editingItem && (
-                <button type="button" onClick={() => { setEditingItem(null); setForm({ name: '', price: '', category: 'Food', desc: '', img: '' }); }} style={{ backgroundColor: '#777', color: '#fff', border: 'none', padding: '10px', borderRadius: '4px', cursor: 'pointer', flex: 1 }}>
+                <button type="button" onClick={() => { setEditingItem(null); setForm({ name: '', price: '', category: 'Food', subcategory: 'Meat Section', desc: '', img: '' }); }} style={{ backgroundColor: '#777', color: '#fff', border: 'none', padding: '10px', borderRadius: '4px', cursor: 'pointer', flex: 1 }}>
                   Cancel
                 </button>
               )}
             </div>
           </div>
-
-          <div style={{ 
-            marginTop: '20px', 
-            padding: '16px', 
-            backgroundColor: '#261a10', 
-            borderRadius: '6px', 
-            textAlign: 'center',
-            border: '1px dashed #f39c12' 
-          }}>
-            <h4 style={{ color: '#f39c12', margin: '0 0 8px 0', textTransform: 'uppercase' }}>
-              📱 Restaurant Table QR Code
-            </h4>
-            <p style={{ color: '#ccc', fontSize: '0.85rem', margin: '0 0 12px 0' }}>
-              Scan this code with your phone to view the live menu layout.
-            </p>
-            
-            <div style={{ background: '#fff', padding: '12px', display: 'inline-block', borderRadius: '4px' }}>
-              <QRCodeSVG 
-                value={window.location.href} 
-                size={180}
-                bgColor={"#ffffff"}
-                fgColor={"#000000"}
-                level={"M"}
-              />
-            </div>
-            
-            <div style={{ color: '#f39c12', fontSize: '0.8rem', marginTop: '8px', wordBreak: 'break-all' }}>
-              <strong>Target Link:</strong> {window.location.href}
-            </div>
-          </div>
-
         </div>
       )}
 
-      {/* Category Navigation Bar */}
+      {/* Main Category Filter Level */}
       <nav className="category-bar">
-        {['All', 'Food', 'Drinks', 'Dessert'].map((cat) => (
+        {['Food', 'Drinks', 'Dessert'].map((cat) => (
           <button 
             key={cat} 
             className={`category-btn ${activeCategory === cat ? 'active' : ''}`}
-            onClick={() => setActiveCategory(cat)}
+            onClick={() => handleNavCategoryClick(cat)}
           >
-            {cat}
+            {cat === 'Dessert' ? 'Dessert & Pastry' : cat}
           </button>
         ))}
       </nav>
 
+      {/* Subcategory Visual Scannable Tag Navigation Track */}
+      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '8px 16px', background: '#261a10' }}>
+        {MENU_STRUCTURE[activeCategory].map((sub) => (
+          <button
+            key={sub}
+            onClick={() => setActiveSubcategory(sub)}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '20px',
+              border: 'none',
+              fontSize: '0.8rem',
+              whiteSpace: 'nowrap',
+              cursor: 'pointer',
+              backgroundColor: activeSubcategory === sub ? '#f39c12' : '#3d2b1d',
+              color: activeSubcategory === sub ? '#000' : '#ccc',
+              fontWeight: 'bold',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {sub}
+          </button>
+        ))}
+      </div>
+
       <div className="menu-section-header">
-        <h2>{activeCategory === 'All' ? 'MAIN DISHES' : `${activeCategory.toUpperCase()}`}</h2>
+        <h2>{activeSubcategory.toUpperCase()}</h2>
       </div>
 
       {/* Menu Cards Display */}
       <main className="menu-list">
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px', fontFamily: 'sans-serif' }}>Loading delicious menu...</div>
+          <div style={{ textAlign: 'center', padding: '40px', fontFamily: 'sans-serif' }}>Loading menu database records...</div>
         ) : filteredMenu.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', fontFamily: 'sans-serif', opacity: 0.7 }}>No items found.</div>
+          <div style={{ textAlign: 'center', padding: '40px', fontFamily: 'sans-serif', opacity: 0.7 }}>No items found in this section.</div>
         ) : (
           filteredMenu.map((item, index) => {
             const assignedColor = CARD_COLORS[index % CARD_COLORS.length];
@@ -275,11 +301,12 @@ function App() {
 
                 <div className="item-details">
                   <h3 className="item-name" style={{ marginTop: isAdmin ? '24px' : '0' }}>{item.name}</h3>
+                  <span style={{ fontSize: '0.7rem', color: '#f39c12', background: '#1b120c', padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginBottom: '6px' }}>{item.subcategory}</span>
                   <p className="item-desc">{item.desc}</p>
                   
                   <div className="price-badge-circle">
                     <span className="badge-size-label">PRICE</span>
-                    <span className="item-price">${item.price ? item.price.toFixed(2) : '0.00'}</span>
+                    <span className="item-price">{item.price ? item.price.toFixed(2) : '0.00'}</span>
                   </div>
                 </div>
 
@@ -301,9 +328,9 @@ function App() {
             <div className="modal-body">
               <div className="modal-header-row">
                 <h3 className="modal-item-name">{selectedItem.name}</h3>
-                <span className="modal-item-price">${selectedItem.price ? selectedItem.price.toFixed(2) : '0.00'}</span>
+                <span className="modal-item-price">{selectedItem.price ? selectedItem.price.toFixed(2) : '0.00'} <small style={{fontSize:'0.6rem'}}>ETB</small></span>
               </div>
-              <span className="modal-category-tag">{selectedItem.category}</span>
+              <span className="modal-category-tag">{selectedItem.category} • {selectedItem.subcategory}</span>
               <p className="modal-item-desc">{selectedItem.desc}</p>
             </div>
           </div>
