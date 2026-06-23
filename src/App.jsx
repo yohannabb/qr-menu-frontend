@@ -88,14 +88,12 @@ function App() {
     const finalCategory = form.category || 'Food';
     let finalSubcategory = form.subcategory;
     
-    // Fallback block if subcategory state becomes blank
     if (!finalSubcategory || finalSubcategory === '') {
       finalSubcategory = MENU_STRUCTURE[finalCategory][1];
     }
 
     const formData = new FormData();
     
-    // 🔥 FIXED: Appending text data elements BEFORE files so multer parses everything reliably
     formData.append('name', form.name.trim());
     formData.append('price', form.price);
     formData.append('category', finalCategory);
@@ -171,36 +169,42 @@ function App() {
     }
   };
 
-  // Case-Insensitive Filter matching logic with automatic keyword fallbacks
+  // Broad Case-Insensitive Filter with bulletproof partial-word detection matrix
   const filteredMenu = menuItems.filter(item => {
     const itemCat = item.category ? item.category.trim().toLowerCase() : '';
     const activeCat = activeCategory.trim().toLowerCase();
     
-    // 1. Verify main category matches
+    // 1. Verify main category matches layout tracking
     const matchesMain = itemCat === activeCat || (activeCat === 'dessert' && itemCat.includes('dessert'));
     if (!matchesMain) return false;
     
-    // 2. If filtering by "All", pull everything immediately
+    // 2. Clear out filtering instantly if looking for general collective sections
     if (activeSubcategory.toLowerCase().startsWith('all')) return true; 
     
     const savedSub = item.subcategory ? item.subcategory.trim().toLowerCase() : '';
     const targetSub = activeSubcategory.trim().toLowerCase();
     
-    // 3. Perfect match validation
+    // 3. Match checking safely handling any backend variations
     if (savedSub === targetSub) return true;
+    if (savedSub.includes('meat') && targetSub.includes('meat')) return true;
+    if (savedSub.includes('fasting') && targetSub.includes('fasting')) return true;
+    if (savedSub.includes('hot') && targetSub.includes('hot')) return true;
+    if (savedSub.includes('soft') && targetSub.includes('soft')) return true;
+    if (savedSub.includes('burger') && targetSub.includes('burger')) return true;
+    if (savedSub.includes('cake') && targetSub.includes('cake')) return true;
+    if (savedSub.includes('pastry') && targetSub.includes('pastry')) return true;
 
-    // 4. Fallback search logic for older items missing a subcategory field
+    // 4. Fallback search parsing by string keywords if subcategory fields are empty/unassigned
     const nameLower = item.name ? item.name.toLowerCase() : '';
     const descLower = item.desc ? item.desc.toLowerCase() : '';
     
-    if (!item.subcategory || savedSub === '' || savedSub === 'general section') {
-      if (targetSub === 'hot drinks' && (nameLower.includes('coffee') || nameLower.includes('tea') || nameLower.includes('macchiato') || nameLower.includes('bunna') || nameLower.includes('shai') || nameLower.includes('cappuccino') || nameLower.includes('milk'))) return true;
-      if (targetSub === 'soft drinks & juices' && (nameLower.includes('juice') || nameLower.includes('coke') || nameLower.includes('fanta') || nameLower.includes('water') || nameLower.includes('sprite') || nameLower.includes('ambo'))) return true;
-      if (targetSub === 'meat section' && (nameLower.includes('tibs') || nameLower.includes('tibis') || nameLower.includes('meat') || nameLower.includes('burger') || nameLower.includes('kitfo') || nameLower.includes('shekla') || nameLower.includes('gore'))) return true;
-      if (targetSub === 'vegetarian / fasting' && (nameLower.includes('shiro') || nameLower.includes('beyaynetu') || nameLower.includes('fasting') || nameLower.includes('veg') || nameLower.includes('misir') || nameLower.includes('kik'))) return true;
-      if (targetSub === 'cakes' && (nameLower.includes('cake') || descLower.includes('cake'))) return true;
-      if (targetSub === 'pastries' && (nameLower.includes('pastry') || nameLower.includes('croissant') || nameLower.includes('sambusa') || nameLower.includes('donut'))) return true;
-    }
+    if (targetSub.includes('hot') && (nameLower.includes('coffee') || nameLower.includes('tea') || nameLower.includes('macchiato') || nameLower.includes('bunna') || nameLower.includes('shai') || nameLower.includes('milk') || nameLower.includes('cappuccino'))) return true;
+    if (targetSub.includes('soft') && (nameLower.includes('juice') || nameLower.includes('coke') || nameLower.includes('fanta') || nameLower.includes('water') || nameLower.includes('sprite') || nameLower.includes('ambo'))) return true;
+    if (targetSub.includes('meat') && (nameLower.includes('tibs') || nameLower.includes('tibis') || nameLower.includes('meat') || nameLower.includes('burger') || nameLower.includes('kitfo') || nameLower.includes('shekla') || nameLower.includes('gore'))) return true;
+    if (targetSub.includes('fasting') && (nameLower.includes('shiro') || nameLower.includes('beyaynetu') || nameLower.includes('fasting') || nameLower.includes('veg') || nameLower.includes('misir') || nameLower.includes('kik'))) return true;
+    if (targetSub.includes('burger') && (nameLower.includes('burger') || nameLower.includes('snack') || nameLower.includes('chips') || nameLower.includes('sandwich'))) return true;
+    if (targetSub.includes('cake') && (nameLower.includes('cake') || descLower.includes('cake'))) return true;
+    if (targetSub.includes('pastries') && (nameLower.includes('pastry') || nameLower.includes('croissant') || nameLower.includes('sambusa') || nameLower.includes('donut'))) return true;
     
     return false;
   });
