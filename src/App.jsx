@@ -4,6 +4,56 @@ import MenuCard from './components/MenuCard';
 import AdminPanel from './components/AdminPanel';
 import './App.css';
 
+// Central localization dictionary data mapping
+const translations = {
+  en: {
+    title: "CAFE & PASTRY HUB",
+    tagline: "Fresh Cooking • Scan • Enjoy",
+    loading: "Loading menu records...",
+    noItems: "No items found in this section.",
+    freshNotice: "ALL MEALS ARE PREPARED FRESH TO ORDER.",
+    adminPortal: "[Admin Management Portal]",
+    logoutAdmin: "[Logout Admin Panel]",
+    currency: "ETB",
+    general: "General",
+    // Subcategories header overrides mapping fallback
+    "all food": "All Food",
+    "meat section": "Meat Section",
+    "vegetarian / fasting": "Vegetarian / Fasting",
+    "burgers & snacks": "Burgers & Snacks",
+    "all drinks": "All Drinks",
+    "hot drinks": "Hot Drinks",
+    "soft drinks & juices": "Soft Drinks & Juices",
+    "alcoholic beverages": "Alcoholic Beverages",
+    "all dessert": "All Dessert",
+    "cakes": "Cakes",
+    "pastries": "Pastries"
+  },
+  am: {
+    title: "ካፌና ፓስትሪ ማዕከል",
+    tagline: "ትኩስ ምግብ • ይቅመሱ • ይደሰቱ",
+    loading: "ሜኑ በመጫን ላይ ነው...",
+    noItems: "በዚህ ክፍል ምንም አይነት ምግብ አልተገኘም።",
+    freshNotice: "ሁሉም ምግቦች በታዘዙበት ቅጽበት በትኩስነታቸው የሚዘጋጁ ናቸው።",
+    adminPortal: "[የአስተዳዳሪ መቆጣጠሪያ]",
+    logoutAdmin: "[ከአስተዳዳሪ መቆጣጠሪያ ውጣ]",
+    currency: "የኢትዮጵያ ብር",
+    general: "ጠቅላላ",
+    // Subcategories header overrides mapping fallback
+    "all food": "ሁሉም ምግቦች",
+    "meat section": "የስጋ ምግቦች",
+    "vegetarian / fasting": "የጾም ምግቦች",
+    "burgers & snacks": "በርገርና መክሰስ",
+    "all drinks": "ሁሉም መጠጦች",
+    "hot drinks": "ትኩስ መጠጦች",
+    "soft drinks & juices": "ለስላሳ መጠጦችና ጁስ",
+    "alcoholic beverages": "የአልኮል መጠጦች",
+    "all dessert": "ሁሉም ጣፋጮች",
+    "cakes": "ኬኮች",
+    "pastries": "ፓስትሪዎች"
+  }
+};
+
 function App() {
   const [menuItems, setMenuItems] = useState([]); 
   const [activeCategory, setActiveCategory] = useState('Food');
@@ -11,6 +61,10 @@ function App() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [imageFile, setImageFile] = useState(null);
+  
+  // Language State: 'en' for English, 'am' for Amharic
+  const [lang, setLang] = useState('en');
+  const t = translations[lang];
 
   // Admin Controller Nodes
   const [isAdmin, setIsAdmin] = useState(false);
@@ -156,10 +210,32 @@ function App() {
   });
 
   return (
-    <div className="mobile-layout">
+    <div className="mobile-layout" style={{ position: 'relative' }}>
+      
+      {/* Floating Language Toggle Switch Trigger */}
+      <div style={{ position: 'absolute', top: '15px', right: '15px', zIndex: 10 }}>
+        <button 
+          onClick={() => setLang(lang === 'en' ? 'am' : 'en')}
+          style={{
+            backgroundColor: '#f39c12',
+            color: '#000',
+            border: 'none',
+            padding: '6px 14px',
+            borderRadius: '20px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            fontSize: '0.8rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            transition: 'transform 0.1s ease'
+          }}
+        >
+          {lang === 'en' ? 'አማርኛ' : 'English'}
+        </button>
+      </div>
+
       <header className="menu-header" style={{ textAlign: 'center', padding: '20px 10px' }}>
-        <div className="brand-badge"><h1 className="restaurant-name">CAFE & PASTRY HUB</h1></div>
-        <p className="restaurant-tagline">Fresh Cooking • Scan • Enjoy</p>
+        <div className="brand-badge"><h1 className="restaurant-name">{t.title}</h1></div>
+        <p className="restaurant-tagline">{t.tagline}</p>
       </header>
 
       {isAdmin && (
@@ -170,18 +246,22 @@ function App() {
         />
       )}
 
+      {/* Passing lang variable down to sync structural elements dynamically */}
       <CategoryNav 
         activeCategory={activeCategory} activeSubcategory={activeSubcategory}
         onCategoryChange={handleNavCategoryChange} onSubcategoryChange={setActiveSubcategory}
+        lang={lang}
       />
 
-      <div className="menu-section-header"><h2>{activeSubcategory.toUpperCase()}</h2></div>
+      <div className="menu-section-header">
+        <h2>{(t[activeSubcategory.toLowerCase()] || activeSubcategory).toUpperCase()}</h2>
+      </div>
 
       <main className="menu-list">
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px' }}>Loading menu records...</div>
+          <div style={{ textAlign: 'center', padding: '40px' }}>{t.loading}</div>
         ) : filteredMenu.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', opacity: 0.7 }}>No items found in this section.</div>
+          <div style={{ textAlign: 'center', padding: '40px', opacity: 0.7 }}>{t.noItems}</div>
         ) : (
           filteredMenu.map((item, index) => (
             <MenuCard 
@@ -200,9 +280,14 @@ function App() {
             <div className="modal-body">
               <div className="modal-header-row">
                 <h3>{selectedItem.name}</h3>
-                <span className="modal-item-price">{selectedItem.price ? selectedItem.price.toFixed(2) : '0.00'} <small style={{fontSize:'0.6rem'}}>ETB</small></span>
+                <span className="modal-item-price">
+                  {selectedItem.price ? selectedItem.price.toFixed(2) : '0.00'}{' '}
+                  <small style={{fontSize:'0.6rem', fontWeight: 'bold'}}>{t.currency}</small>
+                </span>
               </div>
-              <span className="modal-category-tag">{selectedItem.category} • {selectedItem.subcategory || "General"}</span>
+              <span className="modal-category-tag">
+                {t[selectedItem.category.toLowerCase()] || selectedItem.category} • {t[selectedItem.subcategory?.toLowerCase()] || selectedItem.subcategory || t.general}
+              </span>
               <p className="modal-item-desc">{selectedItem.desc}</p>
             </div>
           </div>
@@ -210,9 +295,9 @@ function App() {
       )}
 
       <footer className="menu-footer">
-        <p className="footer-line-1">ALL MEALS ARE PREPARED FRESH TO ORDER.</p>
+        <p className="footer-line-1">{t.freshNotice}</p>
         <button onClick={handleAdminLogin} style={{ background: 'none', border: 'none', color: '#f39c12', opacity: 0.3, fontSize: '0.7rem', marginTop: '12px', cursor: 'pointer', textDecoration: 'underline' }}>
-          {isAdmin ? "[Logout Admin Panel]" : "[Admin Management Portal]"}
+          {isAdmin ? t.logoutAdmin : t.adminPortal}
         </button>
       </footer>
     </div>

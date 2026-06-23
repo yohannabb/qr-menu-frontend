@@ -1,6 +1,6 @@
 import React from 'react';
+import { translations } from '../utils/translations';
 
-// Shared structural configuration mapping matrix
 export const MENU_STRUCTURE = {
   Food: ['All Food', 'Meat Section', 'Vegetarian / Fasting', 'Burgers & Snacks'],
   Drinks: ['All Drinks', 'Hot Drinks', 'Soft Drinks & Juices', 'Alcoholic Beverages'],
@@ -11,8 +11,11 @@ export default function CategoryNav({
   activeCategory, 
   activeSubcategory, 
   onCategoryChange, 
-  onSubcategoryChange 
+  onSubcategoryChange,
+  lang // Pass language state down
 }) {
+  const t = translations[lang];
+
   return (
     <>
       {/* Main Category Level */}
@@ -23,7 +26,7 @@ export default function CategoryNav({
             className={`category-btn ${activeCategory === cat ? 'active' : ''}`}
             onClick={() => onCategoryChange(cat)}
           >
-            {cat === 'Dessert' ? 'Dessert & Pastry' : cat}
+            {t[cat]} {/* Dynamic translation */}
           </button>
         ))}
       </nav>
@@ -47,7 +50,7 @@ export default function CategoryNav({
               transition: 'all 0.2s ease'
             }}
           >
-            {sub}
+            {t[sub] || sub} {/* Dynamic translation */}
           </button>
         ))}
       </div>
