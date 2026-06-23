@@ -46,14 +46,12 @@ function App() {
     fetchMenu();
   }, []);
 
-  // Sync subcategory form state when main category drops down
   const handleMainCategoryChange = (e) => {
     const mainCat = e.target.value;
     const defaultSub = MENU_STRUCTURE[mainCat][1]; 
     setForm(prev => ({ ...prev, category: mainCat, subcategory: defaultSub }));
   };
 
-  // Switch tabs cleanly on navigation click
   const handleNavCategoryClick = (cat) => {
     setActiveCategory(cat);
     setActiveSubcategory(MENU_STRUCTURE[cat][0]); 
@@ -76,7 +74,6 @@ function App() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Handle Add or Update Submission safely
   const handleSubmit = (e) => {
     if (e && e.preventDefault) e.preventDefault();
 
@@ -93,7 +90,6 @@ function App() {
     }
 
     const formData = new FormData();
-    
     formData.append('name', form.name.trim());
     formData.append('price', form.price);
     formData.append('category', finalCategory);
@@ -169,42 +165,43 @@ function App() {
     }
   };
 
-  // Broad Case-Insensitive Filter with bulletproof partial-word detection matrix
   const filteredMenu = menuItems.filter(item => {
-    const itemCat = item.category ? item.category.trim().toLowerCase() : '';
+    const itemCat = item.category ? item.category.trim().toLowerCase() : 'food';
     const activeCat = activeCategory.trim().toLowerCase();
     
-    // 1. Verify main category matches layout tracking
     const matchesMain = itemCat === activeCat || (activeCat === 'dessert' && itemCat.includes('dessert'));
     if (!matchesMain) return false;
     
-    // 2. Clear out filtering instantly if looking for general collective sections
     if (activeSubcategory.toLowerCase().startsWith('all')) return true; 
     
-    const savedSub = item.subcategory ? item.subcategory.trim().toLowerCase() : '';
     const targetSub = activeSubcategory.trim().toLowerCase();
-    
-    // 3. Match checking safely handling any backend variations
-    if (savedSub === targetSub) return true;
-    if (savedSub.includes('meat') && targetSub.includes('meat')) return true;
-    if (savedSub.includes('fasting') && targetSub.includes('fasting')) return true;
-    if (savedSub.includes('hot') && targetSub.includes('hot')) return true;
-    if (savedSub.includes('soft') && targetSub.includes('soft')) return true;
-    if (savedSub.includes('burger') && targetSub.includes('burger')) return true;
-    if (savedSub.includes('cake') && targetSub.includes('cake')) return true;
-    if (savedSub.includes('pastry') && targetSub.includes('pastry')) return true;
-
-    // 4. Fallback search parsing by string keywords if subcategory fields are empty/unassigned
     const nameLower = item.name ? item.name.toLowerCase() : '';
     const descLower = item.desc ? item.desc.toLowerCase() : '';
     
-    if (targetSub.includes('hot') && (nameLower.includes('coffee') || nameLower.includes('tea') || nameLower.includes('macchiato') || nameLower.includes('bunna') || nameLower.includes('shai') || nameLower.includes('milk') || nameLower.includes('cappuccino'))) return true;
-    if (targetSub.includes('soft') && (nameLower.includes('juice') || nameLower.includes('coke') || nameLower.includes('fanta') || nameLower.includes('water') || nameLower.includes('sprite') || nameLower.includes('ambo'))) return true;
-    if (targetSub.includes('meat') && (nameLower.includes('tibs') || nameLower.includes('tibis') || nameLower.includes('meat') || nameLower.includes('burger') || nameLower.includes('kitfo') || nameLower.includes('shekla') || nameLower.includes('gore'))) return true;
-    if (targetSub.includes('fasting') && (nameLower.includes('shiro') || nameLower.includes('beyaynetu') || nameLower.includes('fasting') || nameLower.includes('veg') || nameLower.includes('misir') || nameLower.includes('kik'))) return true;
-    if (targetSub.includes('burger') && (nameLower.includes('burger') || nameLower.includes('snack') || nameLower.includes('chips') || nameLower.includes('sandwich'))) return true;
-    if (targetSub.includes('cake') && (nameLower.includes('cake') || descLower.includes('cake'))) return true;
-    if (targetSub.includes('pastries') && (nameLower.includes('pastry') || nameLower.includes('croissant') || nameLower.includes('sambusa') || nameLower.includes('donut'))) return true;
+    if (targetSub.includes('meat')) {
+      return (nameLower.includes('tibs') || nameLower.includes('tibis') || nameLower.includes('meat') || nameLower.includes('kitfo') || nameLower.includes('shekla') || nameLower.includes('gore') || nameLower.includes('siga'));
+    }
+    if (targetSub.includes('fasting') || targetSub.includes('veg')) {
+      return (nameLower.includes('shiro') || nameLower.includes('beyaynetu') || nameLower.includes('fasting') || nameLower.includes('veg') || nameLower.includes('misir') || nameLower.includes('kik') || nameLower.includes('gomen'));
+    }
+    if (targetSub.includes('burger') || targetSub.includes('snack')) {
+      return (nameLower.includes('burger') || nameLower.includes('chips') || nameLower.includes('sandwich') || nameLower.includes('snack') || nameLower.includes('pizza'));
+    }
+    if (targetSub.includes('hot')) {
+      return (nameLower.includes('coffee') || nameLower.includes('tea') || nameLower.includes('macchiato') || nameLower.includes('bunna') || nameLower.includes('shai') || nameLower.includes('milk') || nameLower.includes('cappuccino') || nameLower.includes('latte'));
+    }
+    if (targetSub.includes('soft') || targetSub.includes('juice')) {
+      return (nameLower.includes('juice') || nameLower.includes('coke') || nameLower.includes('fanta') || nameLower.includes('water') || nameLower.includes('sprite') || nameLower.includes('ambo') || nameLower.includes('soft'));
+    }
+    if (targetSub.includes('alcohol')) {
+      return (nameLower.includes('beer') || nameLower.includes('wine') || nameLower.includes('draft') || nameLower.includes('whiskey') || nameLower.includes('habesha') || nameLower.includes('walia'));
+    }
+    if (targetSub.includes('cake')) {
+      return (nameLower.includes('cake') || descLower.includes('cake'));
+    }
+    if (targetSub.includes('pastr')) {
+      return (nameLower.includes('pastry') || nameLower.includes('croissant') || nameLower.includes('sambusa') || nameLower.includes('donut') || nameLower.includes('baklava'));
+    }
     
     return false;
   });
@@ -212,11 +209,23 @@ function App() {
   return (
     <div className="mobile-layout">
       {/* Header Layout */}
-      <header className="menu-header">
+      <header className="menu-header" style={{ textAlign: 'center', padding: '20px 10px' }}>
         <div className="brand-badge">
           <h1 className="restaurant-name">CAFE & PASTRY HUB</h1>
         </div>
         <p className="restaurant-tagline">Fresh Cooking • Scan • Enjoy</p>
+
+        {/* 🔥 FIXED: QR Code explicitly extracted outside conditional logic loops so it never drops offline */}
+        <div className="qr-container" style={{ margin: '15px auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', background: '#fff', padding: '10px', borderRadius: '8px', width: 'fit-content' }}>
+          <QRCodeSVG 
+            value={window.location.href} 
+            size={110}
+            bgColor={"#ffffff"}
+            fgColor={"#1b120c"}
+            level={"L"}
+          />
+          <span style={{ color: '#1b120c', fontSize: '0.65rem', fontWeight: 'bold', fontFamily: 'sans-serif' }}>SCAN FOR DIGITAL MENU</span>
+        </div>
       </header>
 
       {/* ADMIN CONTROL PANEL DASHBOARD VIEW */}
@@ -239,7 +248,6 @@ function App() {
               </select>
             </div>
 
-            {/* Dynamic Subcategory Form Selector */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <label style={{ color: '#f39c12', fontSize: '0.8rem', fontWeight: 'bold' }}>Specific Menu Section:</label>
               <select name="subcategory" value={form.subcategory} onChange={handleInputChange} style={{ padding: '8px', borderRadius: '4px', border: 'none', width: '100%' }}>
