@@ -208,29 +208,30 @@ function App() {
 
   return (
     <div className="mobile-layout">
-      {/* Header Layout */}
+      {/* Clean Public Header Layout */}
       <header className="menu-header" style={{ textAlign: 'center', padding: '20px 10px' }}>
         <div className="brand-badge">
           <h1 className="restaurant-name">CAFE & PASTRY HUB</h1>
         </div>
         <p className="restaurant-tagline">Fresh Cooking • Scan • Enjoy</p>
-
-        {/* 🔥 FIXED: QR Code explicitly extracted outside conditional logic loops so it never drops offline */}
-        <div className="qr-container" style={{ margin: '15px auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', background: '#fff', padding: '10px', borderRadius: '8px', width: 'fit-content' }}>
-          <QRCodeSVG 
-            value={window.location.href} 
-            size={110}
-            bgColor={"#ffffff"}
-            fgColor={"#1b120c"}
-            level={"L"}
-          />
-          <span style={{ color: '#1b120c', fontSize: '0.65rem', fontWeight: 'bold', fontFamily: 'sans-serif' }}>SCAN FOR DIGITAL MENU</span>
-        </div>
       </header>
 
       {/* ADMIN CONTROL PANEL DASHBOARD VIEW */}
       {isAdmin && (
         <div style={{ backgroundColor: '#1b120c', padding: '16px', borderBottom: '3px solid #f39c12', fontFamily: 'sans-serif' }}>
+          
+          {/* 🔥 POSITIONED INSIDE ADMIN PANEL ONLY: Visible exclusively when logged in */}
+          <div className="qr-container" style={{ margin: '0 auto 20px auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', background: '#fff', padding: '10px', borderRadius: '8px', width: 'fit-content' }}>
+            <QRCodeSVG 
+              value={window.location.href} 
+              size={120}
+              bgColor={"#ffffff"}
+              fgColor={"#1b120c"}
+              level={"L"}
+            />
+            <span style={{ color: '#1b120c', fontSize: '0.65rem', fontWeight: 'bold' }}>SCAN FOR DIGITAL MENU</span>
+          </div>
+
           <h3 style={{ color: '#f39c12', margin: '0 0 12px 0', textTransform: 'uppercase' }}>
             {editingItem ? "⚡ Editing Mode" : "📝 Add New Cafeteria Item"}
           </h3>
@@ -325,9 +326,9 @@ function App() {
       {/* Menu Cards Display */}
       <main className="menu-list">
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px', fontFamily: 'sans-serif' }}>Loading menu database records...</div>
+          <div style={{ textTransform: 'none', textAlign: 'center', padding: '40px', fontFamily: 'sans-serif' }}>Loading menu database records...</div>
         ) : filteredMenu.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', fontFamily: 'sans-serif', opacity: 0.7 }}>No items found in this section.</div>
+          <div style={{ textTransform: 'none', textAlign: 'center', padding: '40px', fontFamily: 'sans-serif', opacity: 0.7 }}>No items found in this section.</div>
         ) : (
           filteredMenu.map((item, index) => {
             const assignedColor = CARD_COLORS[index % CARD_COLORS.length];
