@@ -62,7 +62,7 @@ function App() {
       setIsAdmin(false); 
     } else {
       const pin = prompt("Enter Admin Password Pin:");
-      if (pin === "1234") { 
+      if (pin === "2237") { 
         setIsAdmin(true);
       } else {
         alert("Incorrect Pin Code!");
